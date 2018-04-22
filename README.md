@@ -11,7 +11,7 @@ this project, your goal will be to use data from accelerometers on the belt, for
 More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the 
 section on the Weight Lifting Exercise Dataset).
  
-Data
+## Data
  
 The training data for this project are available here:
    
@@ -32,20 +32,3 @@ report describing how you built your model, how you used cross validation, what 
 of sample error is, and why you made the choices you did. You will also use your prediction model to 
 predict 20 different test cases.
  
-Peer Review Portion
- 
-Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown 
-and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words 
-and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo 
-with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on 
-graders :-).
-
-Course Project Prediction Quiz Portion
- 
-Apply your machine learning algorithm to the 20 test cases available in the test data above and submit your 
-predictions in appropriate format to the Course Project Prediction Quiz for automated grading.
- 
-Reproducibility
-Due to security concerns with the exchange of R code, your code will not be run during the evaluation by 
-your classmates. Please be sure that if they download the repo, they will be able to view the compiled 
-HTML version of your analysis.
