@@ -1,0 +1,167 @@
+---
+title: "Practical Machine Learning Project"
+author: "William Matthews"
+date: "April 22, 2018"
+output: html_document
+keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Instructions
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount 
+of data about personal activity relatively inexpensively.
+
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely 
+quantify how well they do it. In this project, your goal will be to use data from accelerometers on the 
+belt, forearm, arm, and dumbell of 6 participants.
+
+The goal of this project is to predict the manner in which they did the exercise. This is the "classe" 
+variable in the training set. 
+
+```{r}
+# Set the working directory
+setwd("~/Coursera/JohnsHopkins/Course 8 - Practical Machine Learning/Week 4")
+```
+
+```{r message=FALSE, warning=FALSE}
+# Load the required packages.
+library(caret)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(randomForest)
+library(corrplot)
+
+```
+
+## Data Processing & Exploratory Analysis
+```{r}
+# Load the training & testing data
+training <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", header = TRUE)
+testing <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", header = TRUE)
+
+# Look at the dimensions of the training & test sets
+dim(training)
+
+dim(testing)
+
+# View the structure of the classe variable
+str(training$classe)
+
+```
+
+## Data Cleaning
+Some of the variables contain many NAs and some variables do not contribute to the analysis need to be
+cleaned. 
+
+```{r}
+# Remove variables that contain at least 90% missing or NA values
+trainVarRem <- which(colSums(is.na(training) | training=="")>0.9*dim(training)[1])
+training2 <- training[,-trainVarRem]
+
+# Remove first 7 variables that don't contribute to the outcome of classe
+training2 <- training2[,-c(1:7)]
+
+dim(training2)
+
+# Do the same for the test data
+testVarRem <- which(colSums(is.na(testing) | testing=="")>0.9*dim(testing)[1])
+testing2 <- testing[,-testVarRem]
+testing2 <- testing2[,-c(1:7)]
+
+dim(testing2)
+
+```
+
+```{r}
+# Split the data to create a training set and validation set
+inTrain <- createDataPartition(training2$classe, p = .70, list = FALSE)
+train <- training2[inTrain,]
+validation <- training2[-inTrain,]
+
+dim(train)
+
+dim(validation)
+
+# Plot the correlation among the variables 
+corMtrx <- cor(train[, -length(names(train))])
+corrplot(corMtrx, order = "FPC", method = "color", type = "lower", 
+         tl.cex = 0.8, tl.col = rgb(0, 0, 0))
+
+# The highly correlated variable display as the dark colors. 
+```
+
+## Data Modeling
+Use random forest, classification trees and gradient boosting to model data.
+
+```{r}
+# 1. Train with random Forest 5-fold cross validation
+set.seed(1500)
+modRF <- train(classe~., data=train, method="rf", trControl = trainControl(method = "cv",number= 5))
+modRF
+
+# pridict outcomes using validation data
+pred_rf <- predict(modRF,validation)
+conf_rf <- confusionMatrix(validation$classe, pred_rf)
+conf_rf
+
+# Display rf accuracy
+conf_rf$overall[1]
+
+# The random forest method has an accuracy rate of over 99% and therefore the out-of-sample error is less
+# than 1%. This indicates that the predictors may be highly correlated. 
+
+# Plot random forest accuracy by predictors
+plot(modRF, main="Accuracy of Random Forest model by number of predictors")
+
+```
+
+```{r}
+# 2. Train with classification tree
+set.seed(1500)
+modTree <- train(classe~., data=train, method="rpart", trControl = trainControl(method = "cv", number = 5))
+fancyRpartPlot(modTree$finalModel)     # View decision tree with fancy function
+
+# Predition with classification tree using validation data set
+pred_Tree <- predict(modTree, validation)
+conf_Tree <- confusionMatrix(validation$classe, pred_Tree)
+conf_Tree
+
+# Display accuracy of classification tree model
+conf_Tree$overall[1]
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# 3. Train with gradient boosting
+set.seed(1500)
+modGBM <- train(classe~., data=train, method="gbm", trControl = trainControl(method = "cv",number= 5),
+                verbose = FALSE)
+```
+
+```{r}
+modGBM
+
+# Predition with Gradient Boosting using validation data set
+pred_GBM <- predict(modGBM, validation)
+conf_GBM <- confusionMatrix(validation$classe, pred_GBM)
+conf_GBM
+
+# Display accuracy of Gradient Boosting model
+conf_GBM$overall[1]
+
+# Plot the Gradient Boosting model
+plot(modGBM)
+
+```
+
+```{r}
+# The model with the highest accuracy is the random forest model. We will use the random forest model to
+# predict with the test data set. 
+pred_Final <- predict(modRF, testing2)
+pred_Final
+
+```
